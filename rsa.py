@@ -215,7 +215,7 @@ def divide(X, Y):
     if (not even(X)):
         r = add(r,[1])
     if (not compare(r,Y)== 2):
-        r = sub(r, Y)
+        r = dec2bin(( bin2dec(r) - bin2dec(Y) ))
         q = add(q, [1])
     return (q,r)
 
@@ -242,14 +242,20 @@ def primality(n):
     if n == 1:
         return True
     a = randrange(1,n)
-
-    r = ( a**(n-1) - 1 ) % n
-    if r == 0:
+    r = modExp( dec2bin( a ), sub( dec2bin( n ), [1] ), dec2bin( n ) )
+    if r == 1:
         return True
     else:
         return False
 
-
+def modExp( a, N1, N ):
+    if zero( N1 ):
+        return [1]
+    z = modExp( a, divide( N1, [0,1] )[0], N )
+    if N1[0] ^ 1:
+        return mod( mult( z, z ), N )
+    else:
+        return mod( mult( a, mult( z, z ) ), N )
 
 def gcd(X, Y):
     if (zero(Y) or (compare(X, Y) == 0)):
@@ -278,11 +284,16 @@ def twos2dec(X):
 '''
 
 def sub(X, Y):
-    if( compare( X, Y ) == 0 ):
-        return [0]
-    (X, Y) = samelen( X, Y )
-    nY = twosComp(Y)
-    return add( X, nY )
+    (xX, yY) = samelen( X, Y )
+    xX.append(0)
+    yY.append(0)
+    nY = twosComp(yY)
+    temp = add( X, nY )
+    #2 is neg flag that corrisponds to s in eegcd 3 is default and not neg
+    if temp[-1] == 1:
+        return ( twosComp(temp)[:-1], 2 )
+    else: 
+        return ( temp[:-1], 3 )
 
 
 def samelen(X, Y):
@@ -316,14 +327,37 @@ def egcd(X,Y,r):
 '''
 def eegcd(a,b):
     if zero(b):
-        return ([1],[0],a)
-    ( x, y, d ) = eegcd( b, divide(a,b)[1] )
+        return ([1],[0], a , 3 )
+    ( q , r ) = divide( a , b )
+    ( x, y, d , s ) = eegcd( b, r )
+    print('before cond' , x,y,d,s)
+    if s == 2:
+        yp = add( x , mult( y , q ) )
+        sp = 3
+        xp = y 
+    else:
+        ( yp , sp ) = sub( x , mult( y , q ) )
+        yp = twosComp(yp)
+        xp = y 
+    return ( xp, yp , d , sp )
 
-    yPrime = twosComp( mult( twosComp(y) , divide( a , b )[0]  ) )
+def modInv( a , n ):
+    ( x, y, d, s ) = egcd( a , n )
+    if compare( d, [1] ) != 0:
+        return []
+    temp = mod( x , n )
+    if s == 2:
+        return temp
+    else:
+        temp = sub(mult(add(divide(x,n)[0], [1]), n) , x)
+        return temp
 
-    return (y, sub( x, yPrime ), d)
 
-#(y*(a//b))
+
+
+
+
+
 def nbprime(n):
     A = [1] + [randrange(2) for x in range( n - 2 )] + [1]
 
@@ -361,6 +395,93 @@ def problem2(n,k):
     return v
 
 
+def rsa():
+    n = int(input("enter n:"))
+    k = int(input("enter k:"))
+    p = nbprime(n,k)
+    print("p: ")
+    print( bin2dec(p) )
+    q = nbprime(n,k)
+    print("q: ")
+    print( bin2dec(q) )
+    N = mult(p,q)
+    print("N: ")
+    print(N)
+    N1 = mult( sub(p,[1]), sub(q,[1]) )
+    print("N1: ")
+    print(N1)
+    e = nbit(n)
+    ENgcd = gcd(e,N1)
+    while( bin2dec(ENgcd) != 1 ):
+        e = nbit(n)
+        ENgcd = gcd(e,N1)
+    (xp,yp,d) = eegcd( bin2dec(e), bin2dec(N1) )
+    if( xp < 0 ):
+        e1 = bin2dec(e) + xp
+    else:
+        e1 = xp
+    x = int(input("enter a message:"))
+    y = (x**bin2dec(e))%bin2dec(N)
+    print("the encrypted message is:")
+    print(y)
+    x = (y**e1)%bin2dec(N)
+    print("unencrypted message is:")
+    print(x)
+    
+def problem1():
+    n = int(input("enter integer n: "))
+    k = int(input("enter confidence K: "))
+    print(primality3(dec2bin(n),dec2bin(k)))
 
-if __name__ == "__main__":
-    print("hi")
+
+def problem2():
+    n = int(input("enter integer n: "))
+    k = int(input("enter confidence k: "))
+    print( bin2dec( nbprime(n,k) ) )
+
+def main():
+
+
+    moreInput = True
+
+    while moreInput:
+
+        print("Which option would you like to choose? (1, 2, 3, or 4)")
+
+        print("1. problem 1")
+
+        print("2. problem 2")
+
+        print("3. RSA:")
+
+        print("4. Quit")
+
+        selection = input("Your selection: ")
+
+       
+
+        if selection == "1":
+
+            problem1()
+
+        elif selection == "2":
+
+            problem2()
+
+        elif selection == "3":
+
+            rsa()
+
+        elif selection == "4":
+
+            moreInput = False
+
+        else:
+
+            print("Unknown input.")
+
+
+main()
+
+
+

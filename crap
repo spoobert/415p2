@@ -1,0 +1,10 @@
+   #line 108
+   if n < m:
+        for j in range(len(B1)-len(A1)):
+            A1.append(0)
+    else:
+        for j in range(len(A1)-len(B1)):
+            B1.append(0)
+
+
+
